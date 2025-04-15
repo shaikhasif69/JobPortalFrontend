@@ -1,0 +1,87 @@
+/* Instead of targeting #root with fixed styles, make it more flexible */
+#root {
+  width: 100%;  /* Changed from max-width: 1280px */
+  margin: 0 auto;
+  padding: 0;  /* Changed from padding: 2rem */
+  text-align: initial;  /* Changed from center */
+}
+
+/* Keep your existing logo animations and other specific styles */
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Add Bootstrap compatibility classes */
+/* Override Bootstrap's card style only when needed */
+.custom-card {
+  padding: 2em;
+}
+
+/* Add custom styles for your job portal */
+.service-icon {
+  width: 80px;
+  height: 80px;
+  background-color: #f8f9fa;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto 1rem auto;
+}
+
+.step-icon {
+  width: 60px;
+  height: 60px;
+  background-color: #007bff;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto 1rem auto;
+}
+
+/* Bootstrap color scheme enhancements */
+.bg-primary-light {
+  background-color: #e6f2ff;
+}
+
+/* Form enhancement styles */
+.form-control:focus {
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
+}
+
+/* Navbar active link highlighting */
+.navbar .nav-link.active {
+  font-weight: bold;
+  color: #007bff;
+}
+
+/* Responsive typography */
+@media (max-width: 768px) {
+  h1.display-4 {
+    font-size: 2.5rem;
+  }
+  .lead {
+    font-size: 1.1rem;
+  }
+}
