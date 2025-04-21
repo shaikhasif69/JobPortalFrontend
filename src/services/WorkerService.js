@@ -1,4 +1,30 @@
+// src/services/WorkerService.js
 import { workerAPI } from './api';
+import TranslationService from './TranslationService';
+
+// Get current language from localStorage
+const getCurrentLanguage = () => localStorage.getItem('language') || 'en';
+
+/**
+ * Helper function to translate API responses if needed
+ * @param {Object} data - API response data
+ * @returns {Promise<Object>} - Translated data if needed
+ */
+const translateIfNeeded = async (data) => {
+  const currentLanguage = getCurrentLanguage();
+  
+  // Skip translation if language is English (source language)
+  if (currentLanguage === 'en') {
+    return data;
+  }
+  
+  try {
+    return await TranslationService.translateObject(data, currentLanguage);
+  } catch (error) {
+    console.error('Translation error:', error);
+    return data; // Return original data if translation fails
+  }
+};
 
 export const WorkerService = {
   /**
@@ -9,6 +35,7 @@ export const WorkerService = {
   getAllWorkers: async (filters = {}) => {
     try {
       const response = await workerAPI.getAllWorkers(filters);
+      // API response is already translated by the axios interceptor
       return response.data.data.workers;
     } catch (error) {
       console.error('Error fetching workers:', error);
@@ -100,6 +127,51 @@ export const WorkerService = {
       return response.data.data;
     } catch (error) {
       console.error('Error fetching worker earnings:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Manually translate worker data if automatic translation failed or is needed
+   * This is a utility function for components that need to translate data locally
+   * @param {Object} workerData - Worker data to translate
+   * @returns {Promise<Object>} Translated worker data
+   */
+  translateWorkerData: async (workerData) => {
+    if (!workerData) return workerData;
+    return await translateIfNeeded(workerData);
+  },
+
+  /**
+   * Get nearby workers with translation support
+   * @param {Object} filters - Location filters
+   * @returns {Promise<Array>} Array of nearby workers with translated data
+   */
+  getNearbyWorkers: async (filters = {}) => {
+    try {
+      const response = await workerAPI.getAllWorkers({
+        ...filters,
+        nearby: true
+      });
+      
+      return response.data.data.workers;
+    } catch (error) {
+      console.error('Error fetching nearby workers:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Search workers by skills or profession with translation support
+   * @param {string} query - Search query
+   * @returns {Promise<Array>} Array of matching workers with translated data
+   */
+  searchWorkers: async (query) => {
+    try {
+      const response = await workerAPI.getAllWorkers({ search: query });
+      return response.data.data.workers;
+    } catch (error) {
+      console.error('Error searching workers:', error);
       throw error;
     }
   }

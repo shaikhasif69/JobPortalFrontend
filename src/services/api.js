@@ -1,8 +1,13 @@
+// src/services/api.js
 import axios from 'axios';
+import TranslationService from './TranslationService';
+
+// Get current language from localStorage
+const getCurrentLanguage = () => localStorage.getItem('language') || 'en';
 
 // Create an axios instance with default config
 const api = axios.create({
-  baseURL: 'https://blue-collar-job-backend.vercel.app/api',
+  baseURL: process.env.REACT_APP_API_URL || 'https://blue-collar-job-backend.vercel.app/api',
   headers: {
     'Content-Type': 'application/json'
   }
@@ -22,9 +27,38 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor for handling errors
+// Response interceptor for handling errors and translating responses
 api.interceptors.response.use(
-  (response) => response,
+  async (response) => {
+    const currentLanguage = getCurrentLanguage();
+    
+    // Skip translation if language is English (source language)
+    if (currentLanguage === 'en') {
+      return response;
+    }
+    
+    // Only translate if response is successful and contains data
+    if (response.data && response.status >= 200 && response.status < 300) {
+      try {
+        // Clone the response to avoid modifying the original
+        const translatedResponse = { ...response };
+        
+        // Translate the response data
+        translatedResponse.data = await TranslationService.translateObject(
+          response.data, 
+          currentLanguage
+        );
+        
+        return translatedResponse;
+      } catch (translationError) {
+        console.error('Error translating API response:', translationError);
+        // Return original response if translation fails
+        return response;
+      }
+    }
+    
+    return response;
+  },
   (error) => {
     // Handle token expiration
     if (error.response && error.response.status === 401) {
@@ -77,36 +111,36 @@ export const customerAPI = {
 
 // Admin API calls
 export const adminAPI = {
-    // Dashboard
-    getDashboardStats: () => api.get('/admin/dashboard'),
-    
-    // User management
-    getAllUsers: (params) => api.get('/users', { params }),
-    getUserById: (id) => api.get(`/users/${id}`),
-    updateUser: (id, data) => api.patch(`/users/${id}`, data),
-    
-    // Worker verification
-    verifyWorker: (id) => {
-        console.log(`Making API call to verify worker with ID: ${id}`);
-        return api.patch(`/admin/workers/${id}/verify`, { isVerified: true });
-      },
-    
-    // Profession management - Using the exact routes from your list
-    getAllProfessions: () => api.get('/admin/professions'),
-    createProfession: (data) => api.post('/admin/professions', data),
-    updateProfession: (id, data) => api.patch(`/admin/professions/${id}`, data),
-    deleteProfession: (id) => api.delete(`/admin/professions/${id}`),
-    
-    // Commission management - Using the exact routes from your list
-    getAllCommissions: () => api.get('/admin/commissions'),
-    updateCommissionRate: (id, rate) => api.patch(`/admin/commissions/${id}`, { rate }),
-    
-    // Admin user creation - Using the exact route from your list
-    createAdminUser: (data) => api.post('/admin/create-admin', data),
-    
-    // Commission earnings - Using the exact route from your list
-    getCommissionEarnings: () => api.get('/admin/earnings')
-  };
+  // Dashboard
+  getDashboardStats: () => api.get('/admin/dashboard'),
+  
+  // User management
+  getAllUsers: (params) => api.get('/users', { params }),
+  getUserById: (id) => api.get(`/users/${id}`),
+  updateUser: (id, data) => api.patch(`/users/${id}`, data),
+  
+  // Worker verification
+  verifyWorker: (id) => {
+    console.log(`Making API call to verify worker with ID: ${id}`);
+    return api.patch(`/admin/workers/${id}/verify`, { isVerified: true });
+  },
+  
+  // Profession management
+  getAllProfessions: () => api.get('/admin/professions'),
+  createProfession: (data) => api.post('/admin/professions', data),
+  updateProfession: (id, data) => api.patch(`/admin/professions/${id}`, data),
+  deleteProfession: (id) => api.delete(`/admin/professions/${id}`),
+  
+  // Commission management
+  getAllCommissions: () => api.get('/admin/commissions'),
+  updateCommissionRate: (id, rate) => api.patch(`/admin/commissions/${id}`, { rate }),
+  
+  // Admin user creation
+  createAdminUser: (data) => api.post('/admin/create-admin', data),
+  
+  // Commission earnings
+  getCommissionEarnings: () => api.get('/admin/earnings')
+};
 
 // Booking API calls (for common booking operations)
 export const bookingAPI = {
@@ -128,6 +162,30 @@ export const paymentAPI = {
 export const commonAPI = {
   updateUserProfile: (data) => api.patch('/users/profile', data),
   updatePassword: (data) => api.patch('/auth/update-password', data)
+};
+
+// Translation Service for direct use in components when needed
+export const translationHelper = {
+  /**
+   * Translates API response data manually when needed
+   * @param {Object} data - Data to translate
+   * @returns {Promise<Object>} Translated data
+   */
+  translateData: async (data) => {
+    const currentLanguage = getCurrentLanguage();
+    
+    // Skip translation if language is English (source language)
+    if (currentLanguage === 'en' || !data) {
+      return data;
+    }
+    
+    try {
+      return await TranslationService.translateObject(data, currentLanguage);
+    } catch (error) {
+      console.error('Translation error:', error);
+      return data; // Return original data if translation fails
+    }
+  }
 };
 
 export default api;
